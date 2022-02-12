@@ -1,0 +1,9 @@
+create or replace NONEDITIONABLE PACKAGE SPREMI AS 
+
+-- procedure za upis update i deletanja stvari iz baze
+ procedure p_save_klijenti(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T);
+ procedure p_save_gledatelje(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T);
+ procedure p_save_dvorane(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T);
+ procedure p_save_filmove(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T);
+ procedure p_save_karte(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T);
+END SPREMI;

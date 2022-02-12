@@ -1,0 +1,352 @@
+create or replace NONEDITIONABLE PACKAGE BODY FILTER AS
+e_iznimka exception;
+-----------------------------------------------------------------------------
+-- check klijenti
+  function f_check_klijenti(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T) return boolean AS
+      l_obj JSON_OBJECT_T;
+      l_klijenti klijenti%rowtype;
+      l_count number;
+      l_id number;
+      l_string varchar2(1000);
+      l_search varchar2(100);
+      l_page number; 
+      l_perpage number;
+      
+  BEGIN
+     l_obj := JSON_OBJECT_T(in_json);  
+     l_string := in_json.TO_STRING;
+
+     SELECT
+        JSON_VALUE(l_string, '$.ID' ),
+        JSON_VALUE(l_string, '$.IME'),
+        JSON_VALUE(l_string, '$.PREZIME' ),
+        JSON_VALUE(l_string, '$.EMAIL' ),
+        JSON_VALUE(l_string, '$.OIB' ),
+        JSON_VALUE(l_string, '$.OVLASTI' ),
+        JSON_VALUE(l_string, '$.SPOL' ),
+        JSON_VALUE(l_string, '$.ZAPORKA' )
+    INTO
+        l_klijenti.ID,
+        l_klijenti.IME,
+        l_klijenti.PREZIME,
+        l_klijenti.EMAIL,
+        l_klijenti.OIB,
+        l_klijenti.OVLASTI,
+        l_klijenti.SPOL,
+        l_klijenti.PASSWORD
+    FROM 
+       dual; 
+
+    if (nvl(l_klijenti.IME, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite ime klijenta'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+
+    if (nvl(l_klijenti.PREZIME, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite prezime klijenta'); 
+       l_obj.put('h_errcode', 102);
+       raise e_iznimka;
+    end if;
+
+    if (nvl(l_klijenti.EMAIL, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite email klijenta'); 
+       l_obj.put('h_errcode', 103);
+       raise e_iznimka;
+    end if;
+
+    if (nvl(l_klijenti.OIB, 0) = 0) then   
+       l_obj.put('h_message', 'Molimo unesite OIB klijenta'); 
+       l_obj.put('h_errcode', 104);
+       raise e_iznimka;
+    end if;
+
+    if (nvl(l_klijenti.OVLASTI, 99) = 99) then   
+       l_obj.put('h_message', 'Molimo odaberite ovlasti klijenta'); 
+       l_obj.put('h_errcode', 105);
+       raise e_iznimka;
+    end if;
+
+    if (nvl(l_klijenti.SPOL, 99) = 99) then   
+       l_obj.put('h_message', 'Molimo unesite spol klijenta'); 
+       l_obj.put('h_errcode', 106);
+       raise e_iznimka;
+    else
+       if (l_klijenti.SPOL not in (0,1)) then
+          l_obj.put('h_message', 'Spol može biti ili 0 ili 1'); 
+          l_obj.put('h_errcode', 107);
+          raise e_iznimka;
+       end if;
+    end if;
+
+
+
+    if (nvl(l_klijenti.ID,0) = 0 and nvl(l_klijenti.PASSWORD, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite zaporku klijenta'); 
+       l_obj.put('h_errcode', 108);
+       raise e_iznimka;
+    end if;
+
+    out_json := l_obj;
+    return false;
+
+  EXCEPTION
+     WHEN E_IZNIMKA THEN
+        return true;
+     WHEN OTHERS THEN
+        l_obj.put('h_message', 'Dogodila se greška u obradi podataka!'); 
+        l_obj.put('h_errcode', 109);
+        out_json := l_obj;
+        return true;
+  END f_check_klijenti;
+  
+  
+-----------------------------------------------------------------------------
+-- check gledatelje
+  function f_check_gledatelje(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T) return boolean AS
+      l_obj JSON_OBJECT_T;
+      l_gledatelji gledatelji%rowtype;
+      l_count number;
+      l_id number;
+      l_string varchar2(1000);
+      l_search varchar2(100);
+      l_page number; 
+      l_perpage number;
+  BEGIN
+     l_obj := JSON_OBJECT_T(in_json);  
+     l_string := in_json.TO_STRING;
+
+     SELECT
+        JSON_VALUE(l_string, '$.ID' ),
+        JSON_VALUE(l_string, '$.ime'),
+        JSON_VALUE(l_string, '$.prezime')
+        
+    INTO
+        l_gledatelji.ID,
+        l_gledatelji.ime,
+        l_gledatelji.prezime
+        
+    FROM 
+       dual; 
+
+    if (nvl(l_gledatelji.ime, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite ime gledatelja'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+
+    if (nvl(l_gledatelji.prezime, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite prezime gledatelja'); 
+       l_obj.put('h_errcode', 102);
+       raise e_iznimka;
+    end if;
+    
+    out_json := l_obj;
+    return false;
+
+  EXCEPTION
+     WHEN E_IZNIMKA THEN
+        return true;
+     WHEN OTHERS THEN
+        l_obj.put('h_message', 'Dogodila se greška u obradi podataka!'); 
+        l_obj.put('h_errcode', 109);
+        out_json := l_obj;
+        return true;
+  END f_check_gledatelje;
+  
+-----------------------------------------------------------------------------
+-- check dvorane
+
+  function f_check_dvorane(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T) return boolean AS
+      l_obj JSON_OBJECT_T;
+      l_dvorane dvorane%rowtype;
+      l_count number;
+      l_id number;
+      l_string varchar2(1000);
+      l_search varchar2(100);
+      l_page number; 
+      l_perpage number;
+  BEGIN
+     l_obj := JSON_OBJECT_T(in_json);  
+     l_string := in_json.TO_STRING;
+
+     SELECT
+        JSON_VALUE(l_string, '$.ID' ),
+        JSON_VALUE(l_string, '$.oznaka'),
+        JSON_VALUE(l_string, '$.brojSjedala')
+        
+    INTO
+        l_dvorane.ID,
+        l_dvorane.oznaka,
+        l_dvorane.brojSjedala
+        
+    FROM 
+       dual; 
+
+    if (nvl(l_dvorane.oznaka, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite oznaku dvorane'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+
+    if (nvl(l_dvorane.brojSjedala, 1000) = 1000) then   
+       l_obj.put('h_message', 'Molimo unesite broj sjedala dvorane'); 
+       l_obj.put('h_errcode', 102);
+       raise e_iznimka;
+    end if;
+    
+    out_json := l_obj;
+    return false;
+
+  EXCEPTION
+     WHEN E_IZNIMKA THEN
+        return true;
+     WHEN OTHERS THEN
+        l_obj.put('h_message', 'Dogodila se greška u obradi podataka!'); 
+        l_obj.put('h_errcode', 109);
+        out_json := l_obj;
+        return true;
+  END f_check_dvorane;
+
+-----------------------------------------------------------------------------
+-- check filmove
+
+  function f_check_filmove(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T) return boolean AS
+      l_obj JSON_OBJECT_T;
+      l_filmovi filmovi%rowtype;
+      l_count number;
+      l_id number;
+      l_string varchar2(1000);
+      l_search varchar2(100);
+      l_page number; 
+      l_perpage number;
+  BEGIN
+     l_obj := JSON_OBJECT_T(in_json);  
+     l_string := in_json.TO_STRING;
+
+     SELECT
+        JSON_VALUE(l_string, '$.ID' ),
+        JSON_VALUE(l_string, '$.naziv'),
+        JSON_VALUE(l_string, '$.trajanje'),
+        JSON_VALUE(l_string, '$.godinaIzdanja'),
+        JSON_VALUE(l_string, '$.redatelj')
+        
+    INTO
+        l_filmovi.ID,
+        l_filmovi.naziv,
+        l_filmovi.trajanje,
+        l_filmovi.godinaIzdanja,
+        l_filmovi.redatelj
+        
+    FROM 
+       dual; 
+
+    if (nvl(l_filmovi.naziv, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite naziv filma'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+
+    if (nvl(l_filmovi.trajanje, 999) = 999) then   
+       l_obj.put('h_message', 'Molimo unesite trajanje filma'); 
+       l_obj.put('h_errcode', 102);
+       raise e_iznimka;
+    end if;
+    
+    if (nvl(l_filmovi.godinaIzdanja, 9999) = 9999) then   
+       l_obj.put('h_message', 'Molimo unesite godinu izdanja filma'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+    
+    if (nvl(l_filmovi.redatelj, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite redatelja filma'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+    
+    out_json := l_obj;
+    return false;
+
+  EXCEPTION
+     WHEN E_IZNIMKA THEN
+        return true;
+     WHEN OTHERS THEN
+        l_obj.put('h_message', 'Dogodila se greška u obradi podataka!'); 
+        l_obj.put('h_errcode', 109);
+        out_json := l_obj;
+        return true;
+  END f_check_filmove;
+  
+-----------------------------------------------------------------------------
+-- check karte
+
+  function f_check_karte(in_json in JSON_OBJECT_T, out_json out JSON_OBJECT_T) return boolean AS
+      l_obj JSON_OBJECT_T;
+      l_karte karte%rowtype;
+      l_count number;
+      l_id number;
+      l_string varchar2(1000);
+      l_search varchar2(100);
+      l_page number; 
+      l_perpage number;
+  BEGIN
+     l_obj := JSON_OBJECT_T(in_json);  
+     l_string := in_json.TO_STRING;
+
+     SELECT
+        JSON_VALUE(l_string, '$.ID' ),
+        JSON_VALUE(l_string, '$.gledatelj'),
+        JSON_VALUE(l_string, '$.dvorana'),
+        JSON_VALUE(l_string, '$.film'),
+        JSON_VALUE(l_string, '$.vrijeme')
+        
+    INTO
+        l_karte.ID,
+        l_karte.gledatelj,
+        l_karte.dvorana,
+        l_karte.film,
+        l_karte.vrijeme
+        
+    FROM 
+       dual; 
+
+    if (nvl(l_karte.gledatelj, 99) = 99) then   
+       l_obj.put('h_message', 'Molimo unesite ID gledatelja'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+
+    if (nvl(l_karte.dvorana, 99) = 99) then   
+       l_obj.put('h_message', 'Molimo unesite ID dvorane'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+    
+    if (nvl(l_karte.film, 99) = 99) then   
+       l_obj.put('h_message', 'Molimo unesite ID filma'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+    
+    if (nvl(l_karte.vrijeme, ' ') = ' ') then   
+       l_obj.put('h_message', 'Molimo unesite vrijeme odvijanja filma'); 
+       l_obj.put('h_errcode', 101);
+       raise e_iznimka;
+    end if;
+    
+    out_json := l_obj;
+    return false;
+
+  EXCEPTION
+     WHEN E_IZNIMKA THEN
+        return true;
+     WHEN OTHERS THEN
+        l_obj.put('h_message', 'Dogodila se greška u obradi podataka!'); 
+        l_obj.put('h_errcode', 109);
+        out_json := l_obj;
+        return true;
+  END f_check_karte;
+
+
+END FILTER;
